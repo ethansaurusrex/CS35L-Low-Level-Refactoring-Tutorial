@@ -1,0 +1,3 @@
+To compile
+
+gcc main.c -o linked_list
