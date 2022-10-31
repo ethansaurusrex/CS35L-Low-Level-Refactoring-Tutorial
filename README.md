@@ -17,7 +17,7 @@ Say something about organization
 
   
 
-The linked list code consists of a `Linked_List` structure, a `Node` structure and some functions for the linked list. The `Node` structure contains some data of type void* (we'll get to why later), and a pointer to the next `Node` in the list. The `Linked_List` structure just keeps track of both the head of the list using a pointer to a `Node` and the size of the list. Together these two structures allow us to put together an implementation of a **generic** Linked List, that is, a list that can accept a pointer to any type as the data. This means we not only could store anything we want, ranging from characters to custom structures, but we could also utilize this singly linked list to implement a number of other data structures such as a hash map, in which the entries of the map are linked lists and each piece of data is a key-value pair. In our case, we use the linked list to implement a stack.
+The linked list code consists of a `Linked_List` structure, a `Node` structure and some functions for the linked list. The `Node` structure contains some data of type `void*` (we'll get to why later), and a pointer to the next `Node` in the list. The `Linked_List` structure just keeps track of both the head of the list using a pointer to a `Node` and the size of the list. Together these two structures allow us to put together an implementation of a **generic** Linked List, that is, a list that can accept a pointer to any type as the data. This means we not only could store anything we want, ranging from characters to custom structures, but we could also utilize this singly linked list to implement a number of other data structures such as a hash map, in which the entries of the map are linked lists and each piece of data is a key-value pair. In our case, we use the linked list to implement a stack.
 
   
 
@@ -42,11 +42,11 @@ The stack code consists of a `Stack` structure, which contains a single `Linked_
 
   
 
-C, lacking the templates of C++, has to find a more hack-y way of allowing generic types. One? such workaround is using void pointers. Void pointers or `void*` are pointers that have no associated data type, they can be assigned any type of pointer. When we dereference them to assign a value or read the value we have to cast them to the type we want. In the context of this code, we see in the struct `Node`, we have a void* data member. Combined with our `list_add` and `list_push` methods we simply save the passed in data to the proper location by using `memcpy`. This saves us some time and has better readability (see comment in code). This allows us to use
+C, lacking the templates of C++, has to find a more hack-y way of allowing generic types. One? such workaround is using void pointers. Void pointers or `void*` are pointers that have no associated data type, they can be assigned any type of pointer. When we dereference them to assign a value or read the value we have to cast them to the type we want. In the context of this code, we see in the struct `Node`, we have a `void*` data member. Combined with our `list_add` and `list_push` methods we simply save the passed in data to the proper location by using `memcpy`. This saves us some time and has better readability (see comment in code). This allows us to use
 
   
 
-Now as for the generic prints we can see an int_print function accepts void* or a pointer to some arbitrary data. We cast the value to actually print out the data.
+Now as for the generic prints we can see an int_print function accepts `void*` or a pointer to some arbitrary data. We cast the value to actually print out the data.
 
   
 ## Refactoring
@@ -267,58 +267,6 @@ Great! Now our `main.c` has been made much cleaner. We can simply add in our hea
 If you read the compile.txt file you will see some terrible instructions on how to compile and run our code. **HINT** we might want to find a better way of doing this. For now, lets run the command given:
 
 ```bash
-
-    return -1;
-  while(n->next != NULL){
-    n = n->next;
-  }
-  new_node->data = malloc(new_data_size);
-  if(new_node == NULL)
-    return -1;
-  memcpy(new_node->data,new_data,new_data_size);
-  new_node->next = NULL;
-  n->next = new_node;
-  l->size++;
-  return 0;
-}
-
-void* list_pop(Linked_List* l) {
-  Node* head = l->head;
-  void* data = head->data;
-  l->head = head->next;
-  l->size--;
-  free(head);
-  return data;
-}
-
-int list_remove(Linked_List* l){
-  Node* n = l->head;
-  while(n->next->next != NULL){
-    n = n->next;
-  }
-  free(n->next);
-  n->next = NULL;
-  l->size--;
-  return 0;
-}
-
-void print_list(Linked_List* l, void (*print_fun)(void *)) {
-  Node* n = l->head;
-  while(n != NULL) {
-    (print_fun)(n->data);
-    n = n->next;
-  }
-}
-
-```
-
-Notice we neglected to place `void print_int(void *x)` into either file. Why? Since print_int is not generalized we want to keep it seperate. In a way, we could treat it as a user-defined function that we want to pass into our generic data structure. For this exercise we will keep it in the main.c, though we could put it in its own file to be neat.
-
-Great! Now our `main.c` has been made much cleaner. We can simply add in our header file, and now let's run it to make sure everything works.
-
-If you read the compile.txt file you will see some terrible instructions on how to compile and run our code. **HINT** we might want to find a better way of doing this. For now, lets run the command given:
-
-```bash
 main.c -o main
 /usr/bin/ld: /tmp/cc2KW7RN.o: in function `stack_init':
 main.c:(.text+0x60): undefined reference to `init_list'
@@ -356,6 +304,91 @@ I have removed the output, but you'll see the same output as before.
 Continuing on, we want to repeat this process once more for the stack data structure code.
 
 ```c
+//stack.h
+#ifndef __STACK_H__
+#define __STACK_H__
 
+#include "linked_list.h"
 
+typedef struct Stack{
+  Linked_List* list;
+} Stack;
+
+int stack_init(Stack* s);
+
+int stack_push(Stack* s, int x);
+
+int stack_pop(Stack* s);
+
+int stack_size(Stack *s);
+
+#endif
 ```
+
+We once again follow the same rules of only including files that are needed for prototypes in the `.h` file, and including files needed for implementations in the `.c` files.
+
+Note also how we are including `linked_list.h` in the stack header file. Thanks to those header guards we won't have circular includes when we decide to compile.
+
+
+```c
+//stack.c
+#include "stack.h"
+
+#include <stdlib.h> //malloc
+
+
+int stack_init(Stack* s) {
+  Linked_List *l = malloc(sizeof(Linked_List)); //allocate some data for our linked list
+  s->list = l; // point to that newly allocated space
+  init_list(s->list); // initialize that Linked_List's members
+  return 0;
+}
+
+int stack_push(Stack* s, int x) {
+  x = list_push(s->list, &x, sizeof(int));
+  return x;
+}
+
+int stack_pop(Stack* s) {
+  int data = *(int *)list_pop(s->list); 
+  return data;
+}
+
+int stack_size(Stack *s) {
+  return s->list->size;
+}
+```
+
+What clean and tidy code. While the implementation leaves more to be desired, no one can complain about the code's organization. All that's left to do is compile it and check the output.
+
+Following the method from before, we want to add `stack.c` in our line when we compile the code.
+
+```bash
+$> gcc main.c linked_list.c stack.c -o main
+$> ./main
+.
+.
+.
+```
+
+Again, the output is omitted since it is quite large.
+
+Now, I tend to not just want the executable but also the `.obj` files. So I could run something like:
+
+```bash
+$> gcc -c main.c
+$> gcc -c linked_list.c
+$> gcc -c stack.c
+$> ls *.o
+main.o	linked_list.o  stack.o
+$> gcc main.o linked_list.o stack.o -o main
+$> ./main
+.
+.
+.
+```
+
+Wow, that was a lot to type just to get the .o files and the final executable, if only there were a quicker way of doing th--
+
+##Makefiles
+
