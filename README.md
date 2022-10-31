@@ -388,7 +388,40 @@ $> ./main
 .
 ```
 
-Wow, that was a lot to type just to get the .o files and the final executable, if only there were a quicker way of doing th--
+Wow, that was a lot to type just to get the .o files and the final executable, if only there were a quicker way of doing th–
 
-##Makefiles
+## Makefiles
 
+Makefiles make the job of compiling, installing, testing, and using software, easy. When it comes to compiled software, there are many variables that need be taken into account to properly run the code on a system. These could be as simple as the version of a compiler to as complex as the chipset and architecture of a machine. Make and Makefiles allow logic to be written that can then build, run, and test our program.
+
+In the context of this small program we are tired of typing out the same commands over and over again.
+
+I will be using Makefile terminology so if you need to refresh you can read up here https://makefiletutorial.com/
+
+Let's start with something small
+
+```makefile
+main:
+	gcc main.c linked_list.c stack.c -o $@
+
+```
+
+Make's default target is the first target, in this case main.
+
+The odd character `$@` is similar to shell scripts where we evaluate variables using the dollar sign. In make, the `@` symbol is a variable that holds the name of the current target. In our case we are naming our executable `main`, the name of the only target we have. Note: we can run shell scripts inside the makefile but note that single dollar signs `$` evaluate make variables and double dollar signs `$$` evaluate shell variables. This *may* be helpful later.
+
+Let's improve this,
+
+```makefile
+main:
+	gcc main.c linked_list.c stack.c -o $@
+
+main.o: main.c
+	gcc -c main.c
+
+linked_list.o: linked_list.h linked_list.c
+	gcc -c linked_list.c
+
+stack.o: stack.h stack.c
+	gcc -c stack.c
+```
