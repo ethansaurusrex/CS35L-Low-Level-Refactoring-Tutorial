@@ -401,18 +401,29 @@ I will be using Makefile terminology so if you need to refresh you can read up h
 Let's start with something small
 
 ```makefile
+Makefile
 main:
 	gcc main.c linked_list.c stack.c -o $@
 
 ```
 
-Make's default target is the first target, in this case main.
+```bash
+$> make
+gcc main.c linked_list.c stack.c -o main
+$> ./main
+.
+.
+.
+```
 
-The odd character `$@` is similar to shell scripts where we evaluate variables using the dollar sign. In make, the `@` symbol is a variable that holds the name of the current target. In our case we are naming our executable `main`, the name of the only target we have. Note: we can run shell scripts inside the makefile but note that single dollar signs `$` evaluate make variables and double dollar signs `$$` evaluate shell variables. This *may* be helpful later.
+Make's default target is the first target, in this case, main.
 
-Let's improve this,
+The odd character `$@` is similar to shell scripts where we evaluate variables using the dollar sign. In make, the `@` symbol is a variable that holds the name of the current target. In our case we are naming our executable `main`, the name of the only target we have. Note: we can run shell scripts inside the makefile as well, but note that single dollar signs `$` evaluate make variables and double dollar signs `$$` evaluate shell variables. This *may* be helpful for your lab.
+
+Continuing, we wanted the object files too so let's improve this,
 
 ```makefile
+Makefile
 main:
 	gcc main.c linked_list.c stack.c -o $@
 
@@ -425,3 +436,99 @@ linked_list.o: linked_list.h linked_list.c
 stack.o: stack.h stack.c
 	gcc -c stack.c
 ```
+
+Now we can individually run each of these targets to create the object files.
+
+```bash
+$> make main.o
+gcc -c main.c
+$> make linked_list.o
+gcc -c linked_list.c
+$> make stack.o
+gcc -c stack.c
+```
+
+Woo! However, if we are doing all this work to compile the files into their object code, we might as well have a shortcut for creating the executable from this object code.
+
+```makefile
+Makefile
+main: main.o linked_list.o stack.o
+	gcc main.o linked_list.o stack.o -o $@
+
+main.o: main.c
+	gcc -c main.c
+
+linked_list.o: linked_list.h linked_list.c
+	gcc -c linked_list.c
+
+stack.o: stack.h stack.c
+	gcc -c stack.c
+```
+
+Now we can run `make` by itself and generate all the code we need, object files and executable. This saves us a lot of time and effort. However you'll notice if you were to change a file and want to recompile the code we run into some issues with our object files.
+
+```bash
+$> make
+make: 'main' is up to date.
+$> rm main
+$> make
+gcc main.o linked_list.o stack.o -o main
+$> rm *.o
+$> make
+gcc main.o linked_list.o stack.o -o main
+```
+
+Rats, we have some issues. First, you can see that main is already present in the directory. Make sees this and doesn't need to rerun the commands associated with it, as the file already exists. We solve this by removing the main file, and re-running make. Unfortunately, this will just re-link the object files. We want to remove all the object files, so we run `rm *.o`, re-run `make`,and **finally** we have the recompile files.
+
+So, let's improve the file once more.
+
+```makefile
+//Makefile
+main: main.o linked_list.o stack.o
+	gcc main.o linked_list.o stack.o -o $@
+
+main.o: main.c
+	gcc -c main.c
+
+linked_list.o: linked_list.h linked_list.c
+	gcc -c linked_list.c
+
+stack.o: stack.h stack.c
+	gcc -c stack.c
+
+.PHONY: clean
+
+clean:
+	rm *.o main
+```
+
+Now we have one more shortcut, saving us typing and time.
+
+Finally, we want to add a little bash to our code to set our compiler. Sometimes poeple have different compilers on their system and if we want to send our friend this code they might want to run on a Mac that either a) doesn't have gcc or b) lacks a link from gcc to the clang compiler.
+
+Lets add some logic to set the compiler. Typically it is labeled `CC` in makefiles so we will follow convention.
+
+```makefile
+CC=$(shell if which gcc > /dev/null 2>&1; \
+	   then echo gcc; exit; \
+	   elif which clang > /dev/null 2>&1; \
+	   then echo clang; exit; \
+	   else \
+	   echo "Error no GCC or Clang on system"; \
+	   exit 1; \
+	   fi)
+
+main: main.o linked_list.o stack.o
+	$(CC) main.o linked_list.o stack.o -o $@
+
+main.o: main.c
+	$(CC) -c main.c
+
+linked_list.o: linked_list.h linked_list.c
+	$(CC) -c linked_list.c
+
+stack.o: stack.h stack.c
+	$(CC) -c stack.c
+```
+
+This little string of code opens up a new shell and runs the `which` command, redirecting both the standard output and standard error to the `/dev/null` file to silence any output. Instead of using the output of the command, the script checks the return code of the
