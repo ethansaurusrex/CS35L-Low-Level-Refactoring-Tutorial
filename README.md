@@ -2,9 +2,20 @@
 
 This is a small practice example where we will walk through the process of refactoring some cluttered code as well as writing a suitable Makefile for the refactored files. This will give you some practice for Lab 5 where we will complete a similar task, yet more complex task.
 
-To start download the 5 files, main.c, linked_list.h, linked_list.c, stack.h, and stack.c.
+Start by cloning the repository into your own workspace.
 
-Opening the files you'll notice that linked_list.h and stack.h contain nothing but some header guards and comments while their respective .c files contain just comments. Navigating to the main.c you'll find some overly-commented code describing the linked list and stack implementations.
+You'll notice 8 files and 1 folder:
+-`main.c`
+-`linked_list.h`
+-`linked_list.c`
+-`stack.h`
+-`stack.c`
+-`compile.txt`
+-`Makfile`
+-`solutions`
+-`README.md`
+
+Opening the files you'll notice that `linked_list.h` and `stack.h` contain nothing but some header guards and comments while their respective .c files contain just comments. Navigating to `main.c` you'll find some overly-commented code describing the linked list and stack implementations. 
 
 ## Basic Code Overview
 
@@ -35,7 +46,7 @@ The `void*` allows us to pass in a pointer of any type, the only work we have to
 
 The stack code consists of a `Stack` structure, which contains a single `Linked_List`. Since stacks typically only have push and pop functions, we emulate them here by creating functions called `stack_push` and `stack_pop`, which are each just wrappers for the linked list push and pop functions instead we no have them accept integral values. Here we are narrowing down the generic linked list to a stack of integers.
 
-  
+You'll notice that neither of the data structures have functions to free any of the allocated data,, I provide a link in the "Further Reading" section at the end of this tutorial explaining why I didn't include any. If you do not read it know that you SHOULD have functions like these as it is good practice. So, in the traditional fashion of a teaching example or math textbook, the implementation of these functions is left as an exercise to the reader.  
 
  
 ### Void* and Generic C-Code
@@ -45,8 +56,8 @@ The stack code consists of a `Stack` structure, which contains a single `Linked_
 C, lacking the templates of C++, has to find a more hack-y way of allowing generic types. One? such workaround is using void pointers. Void pointers or `void*` are pointers that have no associated data type, they can be assigned any type of pointer. When we dereference them to assign a value or read the value we have to cast them to the type we want. In the context of this code, we see in the struct `Node`, we have a `void*` data member. Combined with our `list_add` and `list_push` methods we simply save the passed in data to the proper location by using `memcpy`. This saves us some time and has better readability (see comment in code). This allows us to use
 
   
-
 Now as for the generic prints we can see an int_print function accepts `void*` or a pointer to some arbitrary data. We cast the value to actually print out the data.
+
 
   
 ## Refactoring
@@ -509,12 +520,12 @@ Finally, we want to add a little bash to our code to set our compiler. Sometimes
 Lets add some logic to set the compiler. Typically it is labeled `CC` in makefiles so we will follow convention.
 
 ```makefile
-CC=$(shell if which gcc > /dev/null 2>&1; \
+CC=$(shell if which gcc > /dev/null; \
 	   then echo gcc; exit; \
-	   elif which clang > /dev/null 2>&1; \
+	   elif which clang > /dev/null; \
 	   then echo clang; exit; \
 	   else \
-	   echo "Error no GCC or Clang on system"; \
+	   echo "Error no GCC or Clang on system" 1>&2; \
 	   exit 1; \
 	   fi)
 
@@ -529,6 +540,47 @@ linked_list.o: linked_list.h linked_list.c
 
 stack.o: stack.h stack.c
 	$(CC) -c stack.c
+
+.PHONY: clean
+
+clean:
+	rm *.o main
 ```
 
-This little string of code opens up a new shell and runs the `which` command, redirecting both the standard output and standard error to the `/dev/null` file to silence any output. Instead of using the output of the command, the script checks the return code of the
+This little string of code opens up a new shell with an if...elif...else statement.
+
+We first run the `which` command, redirecting both the standard output and standard error to the `/dev/null` file to silence any prints. Instead of using the output of the command, the script checks the return code of the command: 0 for success, any other value for failure. If the `if` statement passes we `echo` the name of the command we are searching for, effectively setting the `CC` flag. If either `gcc` or `clang` is not on the system, we print out an error message and exit with code 1. This will cause the main target to fail miserably, allowing us to figure out what our local compiler is.
+
+
+Say you did not have gcc or clang installed and instead had a compiler call qcc. You can then manually set the compiler by pass `VAR=VAL` along with your make command, where `VAR` is the makefile variable and `VAL` is the value you want. Below is an example.
+
+```bash
+$> make
+Error no GCC or Clang on system main.o linked_list.o stack.o -o main
+make: Error: Command not found
+make: *** [Makefile:9: main] Error 127
+$> make CC=qcc
+qcc main.o linked_list.o stack.o -o main
+```
+
+This changed the name of the compiler we wanted, and ran the commands we wanted with that new compiler!
+
+**NOTE: Not all compilers are created equal, clang shares many of the features of gcc allowing us to use the two synomynously. Be warned, we cannot expect the same from all compilers.
+
+## Closing Words
+
+If you've been following along, and didn't just look at the solutions, you've now refactored some clutered code and created a suitable Makefile for it! Hopefully you've learned a little about C headers, generic C data structures, Makefiles, and good coding practices. You should now have the tools to complete Lab 5 where you will not only be refactoring code, but adding to it as well. Good luck!
+
+## Further Reading
+
+- Header files resource: https://gcc.gnu.org/onlinedocs/cpp/Header-Files.html
+
+- Basics of Makefiles: https://www.gnu.org/software/make/manual/make.html#Rule-Introduction
+
+- Function Pointer and Generic C Coding slides, Boise State: http://cs.boisestate.edu/~amit/teaching/253/handouts/07-c-generic-coding-handout.pdf
+
+- C Coding Practices, CMU (I don't follow this to a tee, I like using C++-style pointers over C): https://users.ece.cmu.edu/~eno/coding/CCodingStandard.html
+
+- Why I didn't have functions to free memory (when I should have): https://stackoverflow.com/questions/654754/what-really-happens-when-you-dont-free-after-malloc-before-program-termination
+
+
