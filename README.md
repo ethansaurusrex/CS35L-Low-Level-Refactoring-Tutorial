@@ -5,15 +5,15 @@ This is a small practice example where we will walk through the process of refac
 To start, clone the repository into your own workspace.
 
 You'll notice 8 files and 1 folder:
--`main.c`
--`linked_list.h`
--`linked_list.c`
--`stack.h`
--`stack.c`
--`compile.txt`
--`Makfile`
--`solutions`
--`README.md`
+- `main.c`
+- `linked_list.h`
+- `linked_list.c`
+- `stack.h`
+- `stack.c`
+- `compile.txt`
+- `Makfile`
+- `solutions`
+- `README.md`
 
 Opening the files you'll notice that `linked_list.h` and `stack.h` contain nothing but some header guards and comments while their respective .c files contain just comments. Navigating to `main.c` you'll find some overly-commented code describing the linked list and stack implementations. 
 
@@ -22,7 +22,7 @@ Opening the files you'll notice that `linked_list.h` and `stack.h` contain nothi
 Before we change any of the code, let's first compile and run it. Taking a peak into `compile.txt` you will see how to run the code. Copy the line and run it in your shell.
 
 ```bash
-$> gcc main.c -o main
+~$ gcc main.c -o main
 ```
 
 Running the code you will see the output of the demos. Take note of this output since we will be using the same main.c code for the entire project.
@@ -290,7 +290,7 @@ Great! Now our `main.c` has been made much cleaner. We can simply add in our hea
 If you read the compile.txt file you will see some terrible instructions on how to compile and run our code. **HINT** we might want to find a better way of doing this. For now, lets run the command given:
 
 ```bash
-main.c -o main
+~$ gcc main.c -o main
 /usr/bin/ld: /tmp/cc2KW7RN.o: in function `stack_init':
 main.c:(.text+0x60): undefined reference to `init_list'
 /usr/bin/ld: /tmp/cc2KW7RN.o: in function `stack_push':
@@ -315,8 +315,8 @@ Oh no.
 The main code has no clue what these linked list functions are. We have to compile our `linked_list.c` file along with the rest of our code.
 
 ```bash
-$> gcc linked_list.c main.c -o main
-$> ./main
+~$ gcc linked_list.c main.c -o main
+~$ ./main
 .
 .
 .
@@ -389,8 +389,8 @@ What clean and tidy code. While the implementation leaves more to be desired, no
 Following the method from before, we want to add `stack.c` in our line when we compile the code.
 
 ```bash
-$> gcc main.c linked_list.c stack.c -o main
-$> ./main
+~$ gcc main.c linked_list.c stack.c -o main
+~$ ./main
 .
 .
 .
@@ -401,13 +401,13 @@ Again, the output is omitted since it is quite large.
 Now, I tend to not just want the executable but also the `.obj` files. So I could run something like:
 
 ```bash
-$> gcc -c main.c
-$> gcc -c linked_list.c
-$> gcc -c stack.c
-$> ls *.o
+~$ gcc -c main.c
+~$ gcc -c linked_list.c
+~$ gcc -c stack.c
+~$ ls *.o
 main.o	linked_list.o  stack.o
-$> gcc main.o linked_list.o stack.o -o main
-$> ./main
+~$ gcc main.o linked_list.o stack.o -o main
+~$ ./main
 .
 .
 .
@@ -432,9 +432,9 @@ main:
 ```
 
 ```bash
-$> make
+~$ make
 gcc main.c linked_list.c stack.c -o main
-$> ./main
+~$ ./main
 .
 .
 .
@@ -464,11 +464,11 @@ stack.o: stack.h stack.c
 Now we can individually run each of these targets to create the object files.
 
 ```bash
-$> make main.o
+~$ make main.o
 gcc -c main.c
-$> make linked_list.o
+~$ make linked_list.o
 gcc -c linked_list.c
-$> make stack.o
+~$ make stack.o
 gcc -c stack.c
 ```
 
@@ -494,13 +494,13 @@ Make note of the inclusion of the dependencies in our default target, `main`. He
 Now we can run `make` by itself and generate all the code we need, object files and executable. This saves us a lot of time and effort. However, you'll notice if you were to change a file and want to recompile the code we run into some issues with our object files.
 
 ```bash
-$> make
+~$ make
 make: 'main' is up to date.
-$> rm main
-$> make
+~$ rm main
+~$ make
 gcc main.o linked_list.o stack.o -o main
-$> rm *.o
-$> make
+~$ rm *.o
+~$ make
 gcc main.o linked_list.o stack.o -o main
 ```
 
@@ -570,11 +570,11 @@ We first run the `which` command, redirecting the standard output to the `/dev/n
 Say you did not have gcc or clang installed and instead had a compiler call qcc. You can then manually set the compiler by passing `VAR=VAL` along with your make command, where `VAR` is the makefile variable and `VAL` is the value you want. Below is an example.
 
 ```bash
-$> make
+~$ make
 Error no GCC or Clang on system main.o linked_list.o stack.o -o main
 make: Error: Command not found
 make: *** [Makefile:9: main] Error 127
-$> make CC=qcc
+~$ make CC=qcc
 qcc main.o linked_list.o stack.o -o main
 ```
 
